@@ -1,10 +1,60 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.io.IOException;
 import java.io.FileWriter;
 
 public class Driver {
+
+    public static void searchHT1(String input, int k, boolean doPrint, FileWriter myWriter) throws IOException {
+        HashMap<Integer, HT> map = new HashMap<Integer, HT>();
+        int collisions = 0;
+        for (int i = 0; i < input.length() - k + 1; i++) {
+            String thisKey = input.substring(i, i + k);
+
+            if (map.containsKey(thisKey.hashCode()) && map.get(thisKey.hashCode()).getKey().equals(thisKey)) {
+                map.get(thisKey.hashCode()).incrementCount();
+            } else if (map.containsKey(thisKey.hashCode()) && !map.get(thisKey.hashCode()).getKey().equals(thisKey)) {
+                collisions++;
+            } else {
+                map.put(thisKey.hashCode(), new HT(thisKey));
+            }
+        }
+
+        if(doPrint){
+            myWriter.write("Collisions: " + collisions + "\n");
+            for (Map.Entry<Integer, HT> entry : map.entrySet()) {
+                myWriter.write("[" + entry.getValue().getKey() + "] " + entry.getValue().getCount() + "\n");
+            }
+        }
+    }
+
+    // public static void searchHT2(String input, int k, boolean doPrint, FileWriter myWriter) throws IOException {
+    //     int arrSize = 101;
+    //     HT[] map = new HT[arrSize];
+    //     int itemsInArray = 0;
+
+    //     for (int i = 0; i < input.length() - k + 1; i++) {
+    //         String thisKey = input.substring(i, i + k);
+
+    //         int index = (int)HT.fnv1aHash(thisKey.getBytes(), k) % arrSize;
+
+    //         if (map[index] == null) {
+    //             map[index] = new HT(thisKey);
+    //             itemsInArray++;
+    //         }
+
+    //         // Resize and rehash array if load factor exceeds 0.75
+    //         if ((float)itemsInArray/(float)arrSize > 0.75) {
+                
+    //         }
+    //     }
+
+    //     if(doPrint){
+    //     }
+    // }
 
     public static void searchBST(String input, int k, boolean doPrint, FileWriter myWriter) throws IOException {
         BST mainBST = null;
@@ -20,9 +70,6 @@ public class Driver {
                     targetBST.incrementCount();
                 }
             }
-            //myWriter.write("i: " + i + "\n");
-            //mainBST.printAll(myWriter);
-            //myWriter.write("\n");
         }
         if(doPrint){
             mainBST.printAll(myWriter);
@@ -38,7 +85,7 @@ public class Driver {
         // This indicates whether the result should be printed or not.
         boolean doPrint = true;
         // This stores the name of the file containing the inputs and outputs.
-        String inputFile = "input.txt";
+        String inputFile = "Testing.txt";
         String outputFile = "output.txt";
 
         // First, try creating the output file from the name specified.
@@ -58,33 +105,33 @@ public class Driver {
                     i++;
                     myWriter.write("\n___________________________\n\nTest Case #" + i + "\n");
 
-                    /*
-                     * myWriter.write("Hash Table..." + "\n");
-                     * 
-                     * // Starts the timer.
-                     * long startSelectionTime = System.nanoTime();
-                     * 
-                     * selectionSort(input, doPrint, myWriter);
-                     * 
-                     * // Ends timer and subtracts it with the start time to get the total time.
-                     * long totalSelectionTime = System.nanoTime() - startSelectionTime;
-                     * // Prints out time in nanoseconds.
-                     * myWriter.write("\n" + totalSelectionTime + " Nanoseconds" + "\n");
-                     * 
-                     */
+                    
+                    myWriter.write("\nHash Table..." + "\n");
+                    for (int k = 5; k < 8; k++) {
+                        myWriter.write("\nk = " + k + "\n");
+                        // Starts the timer.
+                        long startHT1SearchTime = System.nanoTime();
+                    
+                        searchHT1(input, k, doPrint, myWriter);
+                    
+                        // Ends timer and subtracts it with the start time to get the total time.
+                        long totalHT1SearchTime = System.nanoTime() - startHT1SearchTime;
+                        // Prints out time in nanoseconds.
+                        myWriter.write("\n" + totalHT1SearchTime + " Nanoseconds" + "\n");
+                    }
 
                     myWriter.write("\nBinary Search Table...\n");
                     for (int k = 5; k < 8; k++) {
                         myWriter.write("\nk = " + k + "\n");
                         // Starts the timer.
-                        long startMergeTime = System.nanoTime();
+                        long startBSTSearchTime = System.nanoTime();
 
                         searchBST(input, k, doPrint, myWriter);
 
                         // Ends timer and subtracts it with the start time to get the total time.
-                        long totalMergeTime = System.nanoTime() - startMergeTime;
+                        long totalBSTSearchTime = System.nanoTime() - startBSTSearchTime;
                         // Prints out time in nanoseconds.
-                        myWriter.write("\n" + totalMergeTime + " Nanoseconds" + "\n");
+                        myWriter.write("\n" + totalBSTSearchTime + " Nanoseconds" + "\n");
                     }
                 }
                 sc.close();
