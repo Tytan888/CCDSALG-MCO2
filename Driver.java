@@ -1,60 +1,161 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 import java.io.IOException;
 import java.io.FileWriter;
 
 public class Driver {
 
+    private static final long FNV1_64_INIT = 0xcbf29ce484222325L;
+    private static final long FNV1_PRIME_64 = 1099511628211L;
+    private static int elementsInMap;
+
+    public static long fnv1aHash(byte[] data, int length) {
+        long hash = FNV1_64_INIT;
+        for (int i = 0; i < length; i++) {
+            hash ^= (data[i] & 0xff);
+            hash *= FNV1_PRIME_64;
+        }
+        
+        return hash;
+    }
+
+    public static void insertHT(HashSlot[] map, int index, String thisKey) {
+        if (map[index] != null) {
+            int arrayListIndex = map[index].searchKey(thisKey);
+            if (arrayListIndex != -1) {
+                map[index].incrementCount(arrayListIndex);
+            } else {
+                map[index].addKey(thisKey);
+                elementsInMap++;
+            }
+        } else {
+            map[index] = new HashSlot(thisKey);
+            elementsInMap++;
+        }
+    }
+
     public static void searchHT1(String input, int k, boolean doPrint, FileWriter myWriter) throws IOException {
-        HashMap<Integer, HT> map = new HashMap<Integer, HT>();
-        int collisions = 0;
+        elementsInMap = 0;
+        int arrSize = 101;
+        HashSlot[] map = new HashSlot[arrSize];
+
         for (int i = 0; i < input.length() - k + 1; i++) {
             String thisKey = input.substring(i, i + k);
 
-            if (map.containsKey(thisKey.hashCode()) && map.get(thisKey.hashCode()).getKey().equals(thisKey)) {
-                map.get(thisKey.hashCode()).incrementCount();
-            } else if (map.containsKey(thisKey.hashCode()) && !map.get(thisKey.hashCode()).getKey().equals(thisKey)) {
-                collisions++;
-            } else {
-                map.put(thisKey.hashCode(), new HT(thisKey));
+            int index = thisKey.hashCode() % (arrSize);
+            if (index < 0) {
+                index += arrSize;
+            }
+
+            insertHT(map, index, thisKey);
+
+            // Resize and rehash array if load factor exceeds 0.75
+            if ((float)elementsInMap/(float)arrSize > 0.75) {
+                // Increases array size by 2 times
+                arrSize *= 2;
+                
+                HashSlot[] tempMap = new HashSlot[arrSize];
+
+                // Rehashes the elements of the array and places them into tempMap
+                for (int j = 0; j < arrSize; j++) {
+                    if (map[j] != null) {
+                        for (String entry : map[j].getKeys()) {
+                            index = thisKey.hashCode() % (arrSize);
+                            if (index < 0) {
+                                index += arrSize;
+                            }
+                            insertHT(tempMap, index, entry);
+                        }
+                    }
+                    // Clones tempMap to main map
+                    map = tempMap;
+                }
+            }
+        }
+
+        int collisions = 0;
+
+        for (HashSlot hashSlot : map) {
+            if(hashSlot != null && !hashSlot.getKeys().isEmpty()) {
+                collisions = collisions + hashSlot.getKeys().size() - 1;
             }
         }
 
         if(doPrint){
             myWriter.write("Collisions: " + collisions + "\n");
-            for (Map.Entry<Integer, HT> entry : map.entrySet()) {
-                myWriter.write("[" + entry.getValue().getKey() + "] " + entry.getValue().getCount() + "\n");
+            myWriter.write("Array Size: " + arrSize + "\n");
+            myWriter.write("Load Factor: " + String.format("%.02f", (float)elementsInMap/(float)arrSize) + "\n");
+            for (HashSlot entry : map) {
+                if (entry != null) {
+                    for (int i = 0; i < entry.getKeys().size(); i++) {
+                        myWriter.write("[" + entry.getKeys().get(i) + "] " + entry.getCounts().get(i) + "\n");
+                    }
+                }
             }
         }
     }
 
-    // public static void searchHT2(String input, int k, boolean doPrint, FileWriter myWriter) throws IOException {
-    //     int arrSize = 101;
-    //     HT[] map = new HT[arrSize];
-    //     int itemsInArray = 0;
+    public static void searchHT2(String input, int k, boolean doPrint, FileWriter myWriter) throws IOException {
+        elementsInMap = 0;
+        int arrSize = 101;
+        HashSlot[] map = new HashSlot[arrSize];
 
-    //     for (int i = 0; i < input.length() - k + 1; i++) {
-    //         String thisKey = input.substring(i, i + k);
+        for (int i = 0; i < input.length() - k + 1; i++) {
+            String thisKey = input.substring(i, i + k);
 
-    //         int index = (int)HT.fnv1aHash(thisKey.getBytes(), k) % arrSize;
+            int index = (int)fnv1aHash(thisKey.getBytes(), k) % (arrSize);
+            if (index < 0) {
+                index += arrSize;
+            }
 
-    //         if (map[index] == null) {
-    //             map[index] = new HT(thisKey);
-    //             itemsInArray++;
-    //         }
+            insertHT(map, index, thisKey);
 
-    //         // Resize and rehash array if load factor exceeds 0.75
-    //         if ((float)itemsInArray/(float)arrSize > 0.75) {
+            // Resize and rehash array if load factor exceeds 0.75
+            if ((float)elementsInMap/(float)arrSize > 0.75) {
+                // Increases array size by 2 times
+                arrSize *= 2;
                 
-    //         }
-    //     }
+                HashSlot[] tempMap = new HashSlot[arrSize];
 
-    //     if(doPrint){
-    //     }
-    // }
+                // Rehashes the elements of the array and places them into tempMap
+                for (int j = 0; j < arrSize; j++) {
+                    if (map[j] != null) {
+                        for (String entry : map[j].getKeys()) {
+                            index = (int)fnv1aHash(entry.getBytes(), k) % (arrSize);
+                            if (index < 0) {
+                                index += arrSize;
+                            }
+                            insertHT(tempMap, index, entry);
+                        }
+                    }
+                    // Clones tempMap to main map
+                    map = tempMap;
+                }
+            }
+        }
+
+        int collisions = 0;
+
+        for (HashSlot hashSlot : map) {
+            if(hashSlot != null && !hashSlot.getKeys().isEmpty()) {
+                collisions = collisions + hashSlot.getKeys().size() - 1;
+            }
+        }
+
+        if(doPrint){
+            myWriter.write("Collisions: " + collisions + "\n");
+            myWriter.write("Array Size: " + arrSize + "\n");
+            myWriter.write("Load Factor: " + String.format("%.02f", (float)elementsInMap/(float)arrSize) + "\n");
+            for (HashSlot entry : map) {
+                if (entry != null) {
+                    for (int i = 0; i < entry.getKeys().size(); i++) {
+                        myWriter.write("[" + entry.getKeys().get(i) + "] " + entry.getCounts().get(i) + "\n");
+                    }
+                }
+            }
+        }
+    }
 
     public static void searchBST(String input, int k, boolean doPrint, FileWriter myWriter) throws IOException {
         BST mainBST = null;
@@ -106,7 +207,7 @@ public class Driver {
                     myWriter.write("\n___________________________\n\nTest Case #" + i + "\n");
 
                     
-                    myWriter.write("\nHash Table..." + "\n");
+                    myWriter.write("\nHash Table 1..." + "\n");
                     for (int k = 5; k < 8; k++) {
                         myWriter.write("\nk = " + k + "\n");
                         // Starts the timer.
@@ -118,6 +219,20 @@ public class Driver {
                         long totalHT1SearchTime = System.nanoTime() - startHT1SearchTime;
                         // Prints out time in nanoseconds.
                         myWriter.write("\n" + totalHT1SearchTime + " Nanoseconds" + "\n");
+                    }
+
+                    myWriter.write("\nHash Table 2..." + "\n");
+                    for (int k = 5; k < 8; k++) {
+                        myWriter.write("\nk = " + k + "\n");
+                        // Starts the timer.
+                        long startHT2SearchTime = System.nanoTime();
+                    
+                        searchHT2(input, k, doPrint, myWriter);
+                    
+                        // Ends timer and subtracts it with the start time to get the total time.
+                        long totalHT2SearchTime = System.nanoTime() - startHT2SearchTime;
+                        // Prints out time in nanoseconds.
+                        myWriter.write("\n" + totalHT2SearchTime + " Nanoseconds" + "\n");
                     }
 
                     myWriter.write("\nBinary Search Table...\n");
