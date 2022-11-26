@@ -57,20 +57,21 @@ public class Driver {
                 
                 HashSlot[] tempMap = new HashSlot[arrSize];
 
+                elementsInMap = 0;
                 // Rehashes the elements of the array and places them into tempMap
-                for (int j = 0; j < arrSize; j++) {
+                for (int j = 0; j < arrSize / 2; j++) {
                     if (map[j] != null) {
                         for (String entry : map[j].getKeys()) {
-                            index = thisKey.hashCode() % (arrSize);
+                            index = entry.hashCode() % (arrSize);
                             if (index < 0) {
                                 index += arrSize;
                             }
                             insertHT(tempMap, index, entry);
                         }
                     }
-                    // Clones tempMap to main map
-                    map = tempMap;
                 }
+                // Clones tempMap to main map
+                map = tempMap;
             }
         }
 
@@ -86,6 +87,8 @@ public class Driver {
             myWriter.write("Collisions: " + collisions + "\n");
             myWriter.write("Array Size: " + arrSize + "\n");
             myWriter.write("Load Factor: " + String.format("%.02f", (float)elementsInMap/(float)arrSize) + "\n");
+            myWriter.write("Number of Elements: " + elementsInMap + "\n");
+            
             for (HashSlot entry : map) {
                 if (entry != null) {
                     for (int i = 0; i < entry.getKeys().size(); i++) {
@@ -118,8 +121,9 @@ public class Driver {
                 
                 HashSlot[] tempMap = new HashSlot[arrSize];
 
+                elementsInMap = 0;
                 // Rehashes the elements of the array and places them into tempMap
-                for (int j = 0; j < arrSize; j++) {
+                for (int j = 0; j < arrSize / 2; j++) {
                     if (map[j] != null) {
                         for (String entry : map[j].getKeys()) {
                             index = (int)fnv1aHash(entry.getBytes(), k) % (arrSize);
@@ -129,9 +133,9 @@ public class Driver {
                             insertHT(tempMap, index, entry);
                         }
                     }
-                    // Clones tempMap to main map
-                    map = tempMap;
                 }
+                // Clones tempMap to main map
+                map = tempMap;
             }
         }
 
@@ -147,6 +151,8 @@ public class Driver {
             myWriter.write("Collisions: " + collisions + "\n");
             myWriter.write("Array Size: " + arrSize + "\n");
             myWriter.write("Load Factor: " + String.format("%.02f", (float)elementsInMap/(float)arrSize) + "\n");
+            myWriter.write("Number of Elements: " + elementsInMap + "\n");
+            
             for (HashSlot entry : map) {
                 if (entry != null) {
                     for (int i = 0; i < entry.getKeys().size(); i++) {
