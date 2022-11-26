@@ -60,7 +60,7 @@ public class Generator {
             if (myObj.createNewFile()) {
                 // Then, generate and write the randomized strings.
                 FileWriter myWriter = new FileWriter(fileName);
-                for(int i = 0; i < cases; i++){
+                for (int i = 0; i < cases; i++) {
                     myWriter.write(generateRandomString(n) + "\n");
                 }
                 myWriter.close();

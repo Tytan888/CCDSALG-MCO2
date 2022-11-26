@@ -123,7 +123,6 @@ public class Driver {
                 map = tempMap;
             }
 
-
         }
 
         // Count the number of collisinos within the hashtable.
